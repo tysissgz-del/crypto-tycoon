@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satoshi's Legacy - 비트코인 채굴 & 트레이딩 시뮬레이터</title>
+    <meta name="description" content="가상 비트코인 채굴, 100배 레버리지 마진 트레이딩, 반감기, 실시간 속보 뉴스를 체험하는 암호화폐 시뮬레이션 게임">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Sticky App Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-logo">
+                <div class="btc-icon">₿</div>
+                <span>Satoshi's Legacy</span>
+            </div>
+
+            <div class="header-stats">
+                <div class="stat-box">
+                    <span class="stat-label">총 순자산 (Net Worth)</span>
+                    <span class="stat-value" id="statTotalNetWorth">$1,000.00 <span class="krw-text">(₩138만원)</span></span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">현금 잔액 (USD Cash)</span>
+                    <span class="stat-value" id="statCashBalance">$1,000.00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">보유 비트코인</span>
+                    <span class="stat-value" id="statBtcBalance">0.00000000 BTC</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">BTC 실시간 시세</span>
+                    <span class="stat-value" id="statBtcPriceHeader">$65,000.00 <span id="statBtcChangeHeader" class="stat-badge badge-up">+2.45%</span></span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-icon" id="audioToggleBtn">🔊 사운드 ON</button>
+                <button class="btn-icon" id="resetGameBtn">🔄 초기화</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Everywhere Floating Alert Banner for 떡상 & 나락 -->
+    <div id="globalEventBanner" style="display: none; padding: 12px 24px; text-align: center; font-weight: 800; font-size: 1.1rem; transition: all 0.3s ease; position: sticky; top: 60px; z-index: 999; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+        <span id="globalEventText">🚀 [떡상 Alert] 비트코인 시세 폭등 중!</span>
+    </div>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+        
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="mining">⚡ 채굴 센터</button>
+            <button class="tab-btn" data-tab="trading">📈 가상 거래소</button>
+            <button class="tab-btn" data-tab="futures">🚀 100x 마진 선물</button>
+            <button class="tab-btn" data-tab="shop">💎 럭셔리 자산 & 하드포크</button>
+            <button class="tab-btn" data-tab="news">📰 속보 & 공포지수</button>
+        </nav>
+
+        <!-- Dynamic Ticker Bar & Prominent BTC Wallet Banner -->
+        <div class="glass-panel" style="padding: 16px 24px; margin-bottom: 20px; background: radial-gradient(circle at top left, rgba(247, 147, 26, 0.15), rgba(18, 22, 38, 0.85)); border: 1px solid var(--border-accent);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #f7931a, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; color: #fff; box-shadow: 0 0 20px rgba(247, 147, 26, 0.5);">₿</div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">내 보유 비트코인 (My Bitcoin Holdings)</div>
+                        <div style="font-size: 1.6rem; font-weight: 900; font-family: var(--font-mono); color: var(--btc-orange);" id="bannerBtcAmount">0.00000000 BTC</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">사토시 수량 (Satoshis)</span>
+                        <span style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-mono); color: var(--cyan-accent);" id="bannerSatsAmount">0 sats</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">달러 평가액 (USD Value)</span>
+                        <span style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-mono); color: var(--green-bull);" id="bannerBtcUsdValue">$0.00</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">원화 평가액 (KRW Value)</span>
+                        <span style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-mono); color: #f3f4f6;" id="bannerBtcKrwValue">₩0원</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BTC Weight Progress Bar -->
+            <div style="margin-top: 14px; background: rgba(0,0,0,0.4); border-radius: 8px; height: 8px; overflow: hidden; position: relative;">
+                <div id="bannerBtcWeightBar" style="background: linear-gradient(90deg, #f7931a, #10b981); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                <span id="miningNoticeTicker">🧊 채굴기 작동 중... 블록 해시를 생성하고 있습니다.</span>
+                <span>비트코인 포트폴리오 비중: <strong id="bannerBtcWeightPct" style="color: var(--btc-orange);">0.0%</strong> | 공포지수: <span id="fearGreedValue" style="font-weight: 700; color: var(--green-bull);">65 (Greed)</span></span>
+            </div>
+        </div>
+
+        <!-- Tab 1: Mining Center -->
+        <div id="tab-mining" class="tab-content" style="display: block;">
+            <div class="dashboard-grid">
+                <div>
+                    <!-- Clicker Mining Hero -->
+                    <div class="mining-hero">
+                        <div class="mine-click-btn" id="manualMineBtn">⛏️</div>
+                        <div class="mine-click-title">탭하여 블록 채굴 (Tap to Mine)</div>
+                        <div class="mine-click-subtitle">클릭할 때마다 비트코인 Satoshis를 직접 수집합니다</div>
+
+                        <!-- Auto-Clicker Control Panel -->
+                        <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap;">
+                            <button class="btn" id="autoClickToggleBtn" style="background: rgba(6, 182, 212, 0.2); border: 1px solid var(--cyan-accent); color: #fff; padding: 10px 18px; border-radius: 10px;">
+                                🤖 오토 클리커: OFF
+                            </button>
+                            <button class="btn btn-primary" id="autoClickUpgradeBtn" style="padding: 10px 18px; border-radius: 10px;">
+                                🚀 오토클리커 구매 ($300 - 1회/초)
+                            </button>
+                        </div>
+                        <div id="autoClickStatusText" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+                            오토클리커 비활성화 상태
+                        </div>
+                    </div>
+
+                    <!-- Automatic Mining Hardware Catalog -->
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">⚙️ 자동 채굴 리그 (Mining Hardware)</div>
+                        </div>
+                        <div class="card-grid" id="miningRigsContainer">
+                            <!-- Injected by mining.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mining Status & Electricity Sidebar -->
+                <div>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📊 채굴 현황 & 반감기</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">총 해시레이트:</span>
+                                <span id="miningTotalHash" style="font-family: var(--font-mono); font-weight: 700; color: var(--btc-orange);">0.0000 TH/s</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">전력 소비량:</span>
+                                <span id="miningPowerKW" style="font-family: var(--font-mono); font-weight: 700;">0.00 kW</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">미납 전기세:</span>
+                                <span id="miningElectricBill" style="font-family: var(--font-mono); font-weight: 700; color: var(--red-bear);">$0.00</span>
+                            </div>
+                            <button class="btn btn-primary" id="payElectricBillBtn" style="margin-top: 6px;">⚡ 전기세 납부하기</button>
+
+                            <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 6px 0;">
+
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">현재 블록 높이:</span>
+                                <span id="miningBlockHeight" style="font-family: var(--font-mono); font-weight: 700;">#840,000</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">다음 반감기까지:</span>
+                                <span id="miningHalvingBlocks" style="font-family: var(--font-mono); font-weight: 700; color: var(--cyan-accent);">210 블록</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">블록 보상 (Reward):</span>
+                                <span id="miningBlockReward" style="font-family: var(--font-mono); font-weight: 700; color: var(--green-bull);">3.125 BTC</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Spot Trading -->
+        <div id="tab-trading" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div>
+                    <!-- Real-Time Candlestick Chart -->
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📈 BTC/USD 실시간 캔들스틱 차트 (MA7 / MA25)</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="cryptoChartCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Spot Trade Buy/Sell Form -->
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">💳 비트코인 현물 매수 / 매도</div>
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: flex-end;">
+                            <div class="form-group" style="flex: 1; margin: 0;">
+                                <label class="form-label">거래 금액 (USD)</label>
+                                <input type="number" id="tradeAmountInput" class="form-input" value="500" min="10" step="50">
+                            </div>
+                            <button class="btn btn-buy-rig" id="buyBtcBtn" style="padding: 12px 24px;">🟢 BTC 매수 (Buy)</button>
+                            <button class="btn" id="sellBtcBtn" style="padding: 12px 24px; background: var(--red-bear); color: #fff;">🔴 BTC 매도 (꾹 누르면 전량 매도)</button>
+                        </div>
+                    </div>
+
+                    <!-- BTC Purchase Portfolio & Avg Price Calculator Card -->
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📊 비트코인 매수 포트폴리오 & 평단가 계산기 (Avg Price Calculator)</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                            <div class="stat-box" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid var(--border-glass);">
+                                <span class="stat-label">총 매수 누적 금액 (Total Spent)</span>
+                                <span class="stat-value" id="statTotalBtcSpent" style="color: #fff;">$0.00</span>
+                            </div>
+                            <div class="stat-box" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid var(--border-glass);">
+                                <span class="stat-label">매수 비트코인 수량 (Bought Qty)</span>
+                                <span class="stat-value" id="statTotalBtcBoughtQty" style="color: var(--btc-orange);">0.00000000 BTC</span>
+                            </div>
+                            <div class="stat-box" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid var(--border-glass);">
+                                <span class="stat-label">비트코인 매수 평단가 (Avg Price)</span>
+                                <span class="stat-value" id="statAvgBuyPrice" style="color: var(--cyan-accent);">$0.00</span>
+                            </div>
+                            <div class="stat-box" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid var(--border-glass);">
+                                <span class="stat-label">매수 자산 평가 손익 (Unrealized PnL)</span>
+                                <span class="stat-value" id="statBtcUnrealizedPnl">$0.00 (+0.00%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Book & Live Trades Sidebar -->
+                <div>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📖 실시간 호가창 (Order Book)</div>
+                        </div>
+                        <div class="order-book-grid">
+                            <div>
+                                <div class="ob-header"><span>매도호가 (Ask)</span><span>수량</span></div>
+                                <div id="orderBookAsks"></div>
+                            </div>
+                            <div>
+                                <div class="ob-header"><span>매수호가 (Bid)</span><span>수량</span></div>
+                                <div id="orderBookBids"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">⚡ 실시간 체결 내역 (Live Trades)</div>
+                        </div>
+                        <div id="liveTradesContainer" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Injected by market.js -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Futures Leverage Trading -->
+        <div id="tab-futures" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">🚀 100배 레버리지 마진 선물 거래 (BTC Futures)</div>
+                        </div>
+
+                        <!-- Long / Short Buttons -->
+                        <div class="btn-trade-type">
+                            <button class="btn-long active-long" id="btnTradeLong">🟢 LONG (상승에 투사)</button>
+                            <button class="btn-short" id="btnTradeShort">🔴 SHORT (하락에 투사)</button>
+                        </div>
+
+                        <div class="trade-form-grid">
+                            <div class="form-group">
+                                <label class="form-label">증거금 (Margin USD)</label>
+                                <input type="number" id="marginAmountInput" class="form-input" value="200" min="10" step="50">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">레버리지 배율 (Leverage)</label>
+                                <select id="leverageSelect" class="form-select">
+                                    <option value="2">2x Leverage</option>
+                                    <option value="5">5x Leverage</option>
+                                    <option value="10" selected>10x Leverage</option>
+                                    <option value="25">25x Leverage</option>
+                                    <option value="50">50x Leverage</option>
+                                    <option value="100">🔥 100x Maximum Leverage</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" id="openMarginBtn" style="width: 100%; padding: 14px; margin-top: 10px; font-size: 1rem;">
+                            🚀 마진 선물 포지션 오픈 (Open Position)
+                        </button>
+                    </div>
+
+                    <!-- Active Margin Positions -->
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">💼 활성화된 마진 포지션 (Open Positions)</div>
+                        </div>
+                        <div id="marginPositionsContainer">
+                            <!-- Injected by trading.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leverage Risks Sidebar -->
+                <div>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">⚠️ 레버리지 위험 안내</div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                            • 레버리지가 높을수록 청산가(Liquidation Price)가 진입가에 매우 가까워집니다.<br>
+                            • 시장 가격이 청산가에 도달하면 증거금 전액이 강제 몰수 청산됩니다.<br>
+                            • 청산 시 사이렌 경보음과 함께 손실이 즉시 반영됩니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Shop & Prestige -->
+        <div id="tab-shop" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div>
+                    <div class="glass-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">💎 럭셔리 가상 자산 (Luxury Lifestyle Shop)</div>
+                        </div>
+                        <div class="card-grid" id="shopItemsContainer">
+                            <!-- Injected by shop.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hard Fork Prestige Sidebar -->
+                <div>
+                    <div class="glass-panel" style="border: 1px solid var(--border-accent);">
+                        <div class="panel-header">
+                            <div class="panel-title" style="color: var(--btc-orange);">🌌 하드포크 환생 (Genesis Rebirth)</div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+                            보유 자산과 채굴기를 리셋하고 <strong style="color: #fff;">제네시스 블록 (Genesis Blocks)</strong>을 영구적으로 획득합니다.<br>
+                            제네시스 블록 1개당 클릭 채굴 파워 및 채굴 속도가 <strong style="color: var(--btc-orange);">+100%</strong> 영구 증가합니다!
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 14px; font-weight: 700;">
+                            <span>현재 제네시스 블록:</span>
+                            <span id="genesisBlocksCount" style="color: var(--btc-orange); font-family: var(--font-mono);">0개</span>
+                        </div>
+                        <button class="btn btn-primary" id="hardForkBtn" style="width: 100%; padding: 12px;">하드포크 실행</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: News & Sentiment -->
+        <div id="tab-news" class="tab-content" style="display: none;">
+            <div class="glass-panel">
+                <div class="panel-header">
+                    <div class="panel-title">📰 암호화폐 실시간 속보 뉴스 (Crypto Breaking News)</div>
+                </div>
+                <div id="newsFeedContainer">
+                    <!-- Injected by news.js -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Game Scripts (ES Modules) -->
+    <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
